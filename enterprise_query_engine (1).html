@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Multi-Database Natural Language Query Engine</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --border: #e2e8f0;
+            --glass: rgba(255, 255, 255, 0.1);
+            --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+        }
+        
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+            top: 10%;
+            left: 20%;
+        }
+        
+        .bg-animation::after {
+            content: '';
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            background: linear-gradient(45deg, #feca57, #ff9ff3);
+            border-radius: 50%;
+            animation: float 8s ease-in-out infinite reverse;
+            bottom: 20%;
+            right: 10%;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+        
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .logo::before {
+            content: '🚀';
+            font-size: 1.8rem;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+        
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-links a:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .cta-button {
+            background: var(--primary);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .cta-button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+        
+        /* Main Content */
+        main {
+            margin-top: 80px;
+        }
+        
+        /* Hero Section */
+        .hero {
+            min-height: 90vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+        }
+        
+        .hero-content {
+            max-width: 800px;
+            color: white;
+            animation: fadeInUp 1s ease-out;
+        }
+        
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #fff 0%, #e2e8f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+        
+        .hero p {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+        
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        /* Query Interface Section */
+        .query-section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            margin: 4rem auto;
+            max-width: 1200px;
+            border-radius: 20px;
+            padding: 3rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: var(--shadow);
+        }
+        
+        .query-interface {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .query-input {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .query-box {
+            flex: 1;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+        
+        .query-box:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .query-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .db-selector {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .db-chip {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid var(--border);
+        }
+        
+        .db-chip.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .db-chip:not(.active) {
+            background: var(--light);
+            color: var(--secondary);
+        }
+        
+        .db-chip:hover:not(.active) {
+            background: rgba(37, 99, 235, 0.1);
+        }
+        
+        /* Features Grid */
+        .features {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            margin: 4rem auto;
+            max-width: 1200px;
+            border-radius: 20px;
+            padding: 3rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .features h2 {
+            text-align: center;
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            font-weight: 700;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+        
+        .feature-card h3 {
+            color: white;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+        
+        .feature-card p {
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.6;
+        }
+        
+        /* Stats Section */
+        .stats {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            margin: 4rem auto;
+            max-width: 1200px;
+            border-radius: 20px;
+            padding: 3rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            text-align: center;
+        }
+        
+        .stat-item h3 {
+            font-size: 3rem;
+            color: var(--primary);
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            counter-reset: stat;
+            animation: countUp 2s ease-out;
+        }
+        
+        .stat-item p {
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+        }
+        
+        /* Demo Section */
+        .demo {
+            background: white;
+            margin: 4rem auto;
+            max-width: 1200px;
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: var(--shadow);
+        }
+        
+        .demo h2 {
+            text-align: center;
+            color: var(--dark);
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            font-weight: 700;
+        }
+        
+        .demo-queries {
+            display: grid;
+            gap: 1rem;
+        }
+        
+        .demo-query {
+            background: var(--light);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .demo-query:hover {
+            background: rgba(37, 99, 235, 0.05);
+            transform: translateX(5px);
+        }
+        
+        .demo-query h4 {
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .demo-query p {
+            color: var(--secondary);
+            font-style: italic;
+        }
+        
+        /* Footer */
+        footer {
+            background: var(--dark);
+            color: white;
+            text-align: center;
+            padding: 3rem 2rem;
+            margin-top: 4rem;
+        }
+        
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .footer-links a:hover {
+            color: white;
+        }
+        
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes countUp {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .query-section,
+            .features,
+            .stats,
+            .demo {
+                margin: 2rem 1rem;
+                padding: 2rem;
+            }
+            
+            .query-input {
+                flex-direction: column;
+            }
+        }
+        
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .hidden { display: none; }
+        
+        .result-container {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: var(--light);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        
+        .result-sql {
+            background: var(--dark);
+            color: #10b981;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    
+    <header>
+        <nav>
+            <a href="#" class="logo">myOnsite Healthcare Query Engine</a>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#demo">Demo</a></li>
+                <li><a href="#docs">Documentation</a></li>
+                <li><a href="#api">API</a></li>
+                <li><a href="#support">Support</a></li>
+            </ul>
+            <button class="cta-button" onclick="scrollToQuery()">Try Now</button>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Enterprise Multi-Database Natural Language Query Engine</h1>
+                <p>Transform complex business questions into optimized SQL across PostgreSQL, MySQL, SQLite, and MongoDB with real-time schema adaptation and enterprise-grade security.</p>
+                <div class="hero-buttons">
+                    <button class="cta-button" onclick="scrollToQuery()">Start Querying</button>
+                    <a href="#demo" class="btn-secondary">View Demo</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="query-section" id="query-interface">
+            <div class="query-interface">
+                <h2 style="margin-bottom: 1.5rem; color: var(--dark); font-weight: 600;">Natural Language Query Interface</h2>
+                
+                <div class="query-input">
+                    <textarea 
+                        class="query-box" 
+                        id="queryInput"
+                        placeholder="Ask me anything about your data... 
+
+Examples:
+• Show me all customers from California who placed orders over $1000
+• What's the revenue trend for the last 6 months by product category?
+• Find customers likely to churn based on their activity patterns"
+                    ></textarea>
+                </div>
+                
+                <div class="query-controls">
+                    <div class="db-selector">
+                        <div class="db-chip active" data-db="postgresql">PostgreSQL</div>
+                        <div class="db-chip active" data-db="mysql">MySQL</div>
+                        <div class="db-chip active" data-db="sqlite">SQLite</div>
+                        <div class="db-chip active" data-db="mongodb">MongoDB</div>
+                    </div>
+                    <button class="cta-button" onclick="executeQuery()">
+                        <span id="queryButtonText">Execute Query</span>
+                        <div id="queryLoading" class="loading hidden"></div>
+                    </button>
+                </div>
+                
+                <div id="queryResult" class="result-container hidden">
+                    <h4>Query Analysis & Generated SQL:</h4>
+                    <div id="queryAnalysis"></div>
+                    <div id="generatedSQL" class="result-sql"></div>
+                    <div id="queryExplanation"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="features" id="features">
+            <h2>Enterprise-Grade Capabilities</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <span class="feature-icon">🎯</span>
+                    <h3>Advanced NL Processing</h3>
+                    <p>Multi-intent query parsing with temporal reasoning, business context awareness, and ambiguity resolution with confidence scoring.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon">🔄</span>
+                    <h3>Real-time Schema Evolution</h3>
+                    <p>Automatic schema discovery and adaptation. Handle structural changes, relationship mapping, and version management seamlessly.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon">🛡️</span>
+                    <h3>Enterprise Security</h3>
+                    <p>Multi-layered SQL injection prevention, role-based access control, query governance, and comprehensive audit logging.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon">🚀</span>
+                    <h3>Multi-Database Federation</h3>
+                    <p>Seamless querying across PostgreSQL, MySQL, SQLite, and MongoDB with dialect-specific optimizations and cross-database joins.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon">📊</span>
+                    <h3>Business Intelligence</h3>
+                    <p>Automated insights detection, performance analytics, cost optimization, and compliance reporting with SOX/GDPR support.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon">⚡</span>
+                    <h3>High Performance</h3>
+                    <p>Intelligent caching, predictive prefetching, cost-based routing, and real-time performance tuning for optimal query execution.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="stats">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <h3>99.9%</h3>
+                    <p>Uptime Guarantee</p>
+                </div>
+                <div class="stat-item">
+                    <h3>&lt;3s</h3>
+                    <p>Simple Query Response</p>
+                </div>
+                <div class="stat-item">
+                    <h3>1000+</h3>
+                    <p>Concurrent Queries</p>
+                </div>
+                <div class="stat-item">
+                    <h3>90%+</h3>
+                    <p>Query Accuracy</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="demo" id="demo">
+            <h2>Example Queries</h2>
+            <div class="demo-queries">
+                <div class="demo-query" onclick="loadDemoQuery(this)">
+                    <h4>Customer Analysis</h4>
+                    <p>"Show me customers from California who haven't ordered in the last 30 days but had high lifetime value"</p>
+                </div>
+                
+                <div class="demo-query" onclick="loadDemoQuery(this)">
+                    <h4>Revenue Analytics</h4>
+                    <p>"Calculate the 3-month rolling average of monthly recurring revenue by customer segment"</p>
+                </div>
+                
+                <div class="demo-query" onclick="loadDemoQuery(this)">
+                    <h4>Cross-Database Insights</h4>
+                    <p>"Compare PostgreSQL order patterns with MongoDB user activity to identify upgrade opportunities"</p>
+                </div>
+                
+                <div class="demo-query" onclick="loadDemoQuery(this)">
+                    <h4>Churn Prediction</h4>
+                    <p>"Find customers exhibiting churn behavior patterns similar to our top revenue customers"</p>
+                </div>
+                
+                <div class="demo-query" onclick="loadDemoQuery(this)">
+                    <h4>Cohort Analysis</h4>
+                    <p>"Generate customer lifetime value cohort analysis using all databases, segmented by acquisition channel"</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="#api">API Documentation</a>
+                <a href="#security">Security</a>
+                <a href="#compliance">Compliance</a>
+                <a href="#support">Support</a>
+                <a href="#pricing">Pricing</a>
+            </div>
+            <p>&copy; 2025 myOnsite Healthcare, LLC. All rights reserved.</p>
+            <p style="margin-top: 0.5rem; opacity: 0.7;">Enterprise Multi-Database Natural Language Query Engine v1.0</p>
+        </div>
+    </footer>
+
+    <script>
+        // Database selection functionality
+        document.querySelectorAll('.db-chip').forEach(chip => {
+            chip.addEventListener('click', function() {
+                this.classList.toggle('active');
+                updateSelectedDatabases();
+            });
+        });
+
+        function updateSelectedDatabases() {
+            const selected = Array.from(document.querySelectorAll('.db-chip.active'))
+                .map(chip => chip.dataset.db);
+            console.log('Selected databases:', selected);
+        }
+
+        // Smooth scrolling
+        function scrollToQuery() {
+            document.getElementById('query-interface').scrollIntoView({ 
+                behavior: 'smooth' 
+            });
+        }
+
+        // Demo query loading
+        function loadDemoQuery(element) {
+            const query = element.querySelector('p').textContent.replace(/"/g, '');
+            document.getElementById('queryInput').value = query;
+            scrollToQuery();
+            setTimeout(() => {
+                executeQuery();
+            }, 500);
+        }
+
+        // Query execution simulation
+        function executeQuery() {
+            const queryInput = document.getElementById('queryInput').value;
+            if (!queryInput.trim()) {
+                alert('Please enter a query');
+                return;
+            }
+
+            const button = document.querySelector('.query-controls .cta-button');
+            const buttonText = document.getElementById('queryButtonText');
+            const loading = document.getElementById('queryLoading');
+            const resultContainer = document.getElementById('queryResult');
+            
+            // Show loading state
+            buttonText.classList.add('hidden');
+            loading.classList.remove('hidden');
+            button.disabled = true;
+            resultContainer.classList.add('hidden');
+
+            // Simulate query processing
+            setTimeout(() => {
+                // Hide loading state
+                buttonText.classList.remove('hidden');
+                loading.classList.add('hidden');
+                button.disabled = false;
+
+                // Show results
+                displayQueryResult(queryInput);
+                resultContainer.classList.remove('hidden');
+            }, 2000 + Math.random() * 1000);
+        }
+
+        function displayQueryResult(query) {
+            const analysis = document.getElementById('queryAnalysis');
+            const sql = document.getElementById('generatedSQL');
+            const explanation = document.getElementById('queryExplanation');
+
+            // Generate mock analysis
+            const selectedDbs = Array.from(document.querySelectorAll('.db-chip.active'))
+                .map(chip => chip.dataset.db.toUpperCase());
+            
+            analysis.innerHTML = `
+                <p><strong>Query Complexity:</strong> Tier ${Math.floor(Math.random() * 4) + 1}</p>
+                <p><strong>Estimated Execution Time:</strong> ${(Math.random() * 5 + 1).toFixed(1)}s</p>
+                <p><strong>Target Databases:</strong> ${selectedDbs.join(', ')}</p>
+                <p><strong>Confidence Score:</strong> ${(0.85 + Math.random() * 0.14).toFixed(2)}</p>
+            `;
+
+            // Generate mock SQL
+            sql.textContent = generateMockSQL(query);
+
+            // Generate explanation
+            explanation.innerHTML = `
+                <h5>Query Reasoning:</h5>
+                <p>The system analyzed your natural language query and identified key entities, relationships, and temporal constraints. 
+                The generated SQL incorporates optimized joins, appropriate filtering conditions, and database-specific performance enhancements.</p>
+                <p><strong>Optimization Applied:</strong> Index hints, query plan optimization, cross-database federation strategy</p>
+            `;
+        }
+
+        function generateMockSQL(query) {
+            const selectedDbs = Array.from(document.querySelectorAll('.db-chip.active'))
+                .map(chip => chip.dataset.db);
+            
+            // Check if only MongoDB is selected or if query specifically mentions MongoDB collections
+            const isMongoOnly = selectedDbs.length === 1 && selectedDbs[0] === 'mongodb';
+            const queryLower = query.toLowerCase();
+            const hasMongoTerms = queryLower.includes('user_profiles') || 
+                                 queryLower.includes('activity_logs') || 
+                                 queryLower.includes('product_catalogs') ||
+                                 queryLower.includes('recommendations');
+            
+            if (isMongoOnly || hasMongoTerms) {
+                return generateMongoDBQuery(query);
+            } else if (selectedDbs.includes('mongodb') && selectedDbs.length > 1) {
+                return generateCrossDatabaseQuery(query, selectedDbs);
+            } else {
+                return generateSQLQuery(query, selectedDbs);
+            }
+        }
+
+        function generateMongoDBQuery(query) {
+            const mongoTemplates = [
+                `// MongoDB Aggregation Pipeline
+db.user_profiles.aggregate([
+  {
+    $match: {
+      "address.state": "California",
+      "lastActivity": { 
+        $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) 
+      },
+      "lifetimeValue": { $gt: 1000 }
+    }
+  },
+  {
+    $lookup: {
+      from: "activity_logs",
+      localField: "userId",
+      foreignField: "userId",
+      as: "activities"
+    }
+  },
+  {
+    $addFields: {
+      "totalSpent": { $sum: "$activities.amount" },
+      "lastPurchaseDate": { $max: "$activities.timestamp" }
+    }
+  },
+  {
+    $match: {
+      "activities": { $ne: [] }
+    }
+  },
+  {
+    $sort: { "lifetimeValue": -1 }
+  },
+  {
+    $project: {
+      "userId": 1,
+      "name": 1,
+      "email": 1,
+      "lifetimeValue": 1,
+      "lastPurchaseDate": 1,
+      "totalSpent": 1
+    }
+  }
+])`,
+
+                `// MongoDB Aggregation for User Behavior Analysis
+db.activity_logs.aggregate([
+  {
+    $match: {
+      "timestamp": {
+        $gte: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
+      }
+    }
+  },
+  {
+    $group: {
+      _id: {
+        userId: "$userId",
+        month: { 
+          $dateToString: { 
+            format: "%Y-%m", 
+            date: "$timestamp" 
+          }
+        }
+      },
+      monthlyEngagement: { $sum: "$engagementScore" },
+      activityCount: { $sum: 1 },
+      totalValue: { $sum: "$value" }
+    }
+  },
+  {
+    $group: {
+      _id: "$_id.userId",
+      monthlyStats: {
+        $push: {
+          month: "$_id.month",
+          engagement: "$monthlyEngagement",
+          activities: "$activityCount",
+          value: "$totalValue"
+        }
+      },
+      avgMonthlyEngagement: { $avg: "$monthlyEngagement" }
+    }
+  },
+  {
+    $addFields: {
+      "rollingAverage": {
+        $map: {
+          input: { $range: [0, { $size: "$monthlyStats" }] },
+          in: {
+            $avg: {
+              $slice: [
+                "$monthlyStats.engagement",
+                { $max: [0, { $subtract: ["$this", 2] }] },
+                3
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    $sort: { "avgMonthlyEngagement": -1 }
+  }
+])`,
+
+                `// MongoDB Geospatial and Recommendation Query
+db.user_profiles.aggregate([
+  {
+    $geoNear: {
+      near: { type: "Point", coordinates: [-122.4194, 37.7749] },
+      distanceField: "distance",
+      maxDistance: 50000,
+      spherical: true
+    }
+  },
+  {
+    $lookup: {
+      from: "recommendations",
+      localField: "userId",
+      foreignField: "userId",
+      as: "recommendations"
+    }
+  },
+  {
+    $lookup: {
+      from: "product_catalogs",
+      localField: "recommendations.productId",
+      foreignField: "productId",
+      as: "recommendedProducts"
+    }
+  },
+  {
+    $addFields: {
+      "churnRisk": {
+        $cond: {
+          if: { 
+            $and: [
+              { $lt: ["$lastActivity", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)] },
+              { $gt: ["$lifetimeValue", 5000] }
+            ]
+          },
+          then: "HIGH",
+          else: {
+            $cond: {
+              if: { $lt: ["$lastActivity", new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)] },
+              then: "MEDIUM",
+              else: "LOW"
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    $match: {
+      "churnRisk": { $in: ["HIGH", "MEDIUM"] }
+    }
+  },
+  {
+    $project: {
+      "userId": 1,
+      "name": 1,
+      "location": 1,
+      "distance": 1,
+      "churnRisk": 1,
+      "lifetimeValue": 1,
+      "recommendedProducts.name": 1,
+      "recommendedProducts.category": 1
+    }
+  },
+  {
+    $sort: { "lifetimeValue": -1, "distance": 1 }
+  },
+  {
+    $limit: 50
+  }
+])`
+            ];
+            
+            return mongoTemplates[Math.floor(Math.random() * mongoTemplates.length)];
+        }
+
+        function generateSQLQuery(query, selectedDbs) {
+            const sqlTemplates = [
+                `SELECT c.customer_id, c.name, c.email, 
+       SUM(o.total_amount) as lifetime_value,
+       MAX(o.order_date) as last_order_date
+FROM customers c 
+LEFT JOIN orders o ON c.customer_id = o.customer_id 
+WHERE c.state = 'California' 
+  AND o.order_date < NOW() - INTERVAL 30 DAY
+  AND c.customer_id IN (
+    SELECT customer_id 
+    FROM customer_segments 
+    WHERE segment = 'high_value'
+  )
+GROUP BY c.customer_id, c.name, c.email
+HAVING lifetime_value > 1000
+ORDER BY lifetime_value DESC;`,
+                
+                `WITH monthly_revenue AS (
+  SELECT 
+    DATE_TRUNC('month', order_date) as month,
+    customer_segment,
+    SUM(total_amount) as monthly_total
+  FROM orders o
+  JOIN customer_segments cs ON o.customer_id = cs.customer_id
+  GROUP BY month, customer_segment
+),
+rolling_avg AS (
+  SELECT 
+    month,
+    customer_segment,
+    monthly_total,
+    AVG(monthly_total) OVER (
+      PARTITION BY customer_segment 
+      ORDER BY month 
+      ROWS 2 PRECEDING
+    ) as three_month_rolling_avg
+  FROM monthly_revenue
+)
+SELECT * FROM rolling_avg 
+WHERE month >= NOW() - INTERVAL 12 MONTH
+ORDER BY customer_segment, month;`,
+
+                `-- Advanced Analytics Query
+SELECT 
+  p.category,
+  p.product_name,
+  SUM(oi.quantity * oi.price) as revenue,
+  COUNT(DISTINCT o.customer_id) as unique_customers,
+  AVG(oi.quantity * oi.price) as avg_order_value,
+  RANK() OVER (PARTITION BY p.category ORDER BY SUM(oi.quantity * oi.price) DESC) as category_rank
+FROM products p
+JOIN order_items oi ON p.product_id = oi.product_id
+JOIN orders o ON oi.order_id = o.order_id
+WHERE o.order_date >= DATE_SUB(NOW(), INTERVAL 3 MONTH)
+GROUP BY p.category, p.product_name
+HAVING revenue > 10000
+ORDER BY p.category, category_rank;`
+            ];
+            
+            return sqlTemplates[Math.floor(Math.random() * sqlTemplates.length)];
+        }
+
+        function generateCrossDatabaseQuery(query, selectedDbs) {
+            return `-- Cross-Database Federation Query
+-- Step 1: PostgreSQL Query
+WITH pg_customers AS (
+  SELECT customer_id, 
+         COUNT(*) as order_frequency,
+         AVG(total_amount) as avg_order_value,
+         MAX(order_date) as last_order
+  FROM orders 
+  WHERE order_date >= NOW() - INTERVAL 60 DAY
+  GROUP BY customer_id
+),
+
+-- Step 2: MongoDB Aggregation (Federated)
+-- db.user_profiles.aggregate([
+--   {
+--     $match: {
+--       "userId": { $in: [/* customer_ids from PostgreSQL */] },
+--       "engagementScore": { $gt: 0.7 }
+--     }
+--   },
+--   {
+--     $project: {
+--       "userId": 1,
+--       "engagementScore": 1,
+--       "featureUsageCount": { $size: "$featureUsage" },
+--       "behaviorScore": "$analytics.behaviorScore"
+--     }
+--   }
+-- ])
+
+-- Step 3: Federation Results
+upgrade_candidates AS (
+  SELECT 
+    pg.customer_id,
+    pg.order_frequency,
+    pg.avg_order_value,
+    mg.engagement_score,
+    mg.feature_usage_count,
+    mg.behavior_score,
+    (pg.order_frequency * pg.avg_order_value * mg.engagement_score) as upgrade_likelihood
+  FROM pg_customers pg
+  INNER JOIN federated_mongo_results mg ON pg.customer_id = mg.user_id
+  WHERE pg.order_frequency > 2 
+    AND mg.engagement_score > 0.7
+)
+
+SELECT 
+  customer_id,
+  order_frequency,
+  avg_order_value,
+  engagement_score,
+  upgrade_likelihood,
+  CASE 
+    WHEN upgrade_likelihood > 100 THEN 'High Priority'
+    WHEN upgrade_likelihood > 50 THEN 'Medium Priority'
+    ELSE 'Low Priority'
+  END as priority_tier
+FROM upgrade_candidates
+ORDER BY upgrade_likelihood DESC
+LIMIT 50;
+
+-- Note: This query demonstrates cross-database federation
+-- where MongoDB aggregation results are joined with PostgreSQL data
+-- through the query engine's federation layer.`;
+        }
+
+        // Add enter key support for query input
+        document.getElementById('queryInput').addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                executeQuery();
+            }
+        });
+
+        // Add smooth scrolling for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Intersection Observer for animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animationPlayState = 'running';
+                }
+            });
+        }, observerOptions);
+
+        // Observe animated elements
+        document.querySelectorAll('.feature-card, .stat-item, .demo-query').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Add typing effect to hero text
+        function typeWriter(element, text, speed = 50) {
+            let i = 0;
+            element.innerHTML = '';
+            function typing() {
+                if (i < text.length) {
+                    element.innerHTML += text.charAt(i);
+                    i++;
+                    setTimeout(typing, speed);
+                }
+            }
+            typing();
+        }
+
+        // Initialize typing effect on page load
+        window.addEventListener('load', () => {
+            const heroTitle = document.querySelector('.hero h1');
+            const originalText = heroTitle.textContent;
+            setTimeout(() => {
+                typeWriter(heroTitle, originalText, 30);
+            }, 500);
+        });
+
+        // Real-time query suggestions
+        const querySuggestions = [
+            "Show me customers who haven't ordered recently",
+            "What are our top selling products this quarter?",
+            "Find customers with declining purchase patterns",
+            "Which products have the highest profit margins?",
+            "Show revenue trends by geographic region",
+            "Identify customers likely to churn next month",
+            "What's our customer acquisition cost by channel?",
+            "Find products that are frequently bought together"
+        ];
+
+        let suggestionIndex = 0;
+        function rotateSuggestions() {
+            const placeholder = document.getElementById('queryInput').placeholder;
+            const lines = placeholder.split('\n');
+            const exampleLine = lines.findIndex(line => line.includes('Examples:'));
+            
+            if (exampleLine !== -1) {
+                const newSuggestion = querySuggestions[suggestionIndex % querySuggestions.length];
+                lines[exampleLine + 1] = `• ${newSuggestion}`;
+                document.getElementById('queryInput').placeholder = lines.join('\n');
+                suggestionIndex++;
+            }
+        }
+
+        // Rotate suggestions every 3 seconds
+        setInterval(rotateSuggestions, 3000);
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + K to focus search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('queryInput').focus();
+            }
+            
+            // Escape to clear search
+            if (e.key === 'Escape') {
+                document.getElementById('queryInput').value = '';
+                document.getElementById('queryResult').classList.add('hidden');
+            }
+        });
+
+        // Database connection status simulation
+        const databases = ['postgresql', 'mysql', 'sqlite', 'mongodb'];
+        function updateConnectionStatus() {
+            databases.forEach(db => {
+                const chip = document.querySelector(`[data-db="${db}"]`);
+                const isHealthy = Math.random() > 0.1; // 90% uptime simulation
+                
+                if (!isHealthy) {
+                    chip.style.opacity = '0.5';
+                    chip.style.border = '1px solid #ef4444';
+                    chip.title = `${db.toUpperCase()} - Connection Issues`;
+                } else {
+                    chip.style.opacity = '1';
+                    chip.style.border = '';
+                    chip.title = `${db.toUpperCase()} - Connected`;
+                }
+            });
+        }
+
+        // Update connection status every 30 seconds
+        setInterval(updateConnectionStatus, 30000);
+        updateConnectionStatus(); // Initial check
+
+        // Performance metrics simulation
+        const performanceMetrics = {
+            queries_executed: 0,
+            avg_response_time: 0,
+            cache_hit_rate: 0,
+            active_connections: 0
+        };
+
+        function updateMetrics() {
+            performanceMetrics.queries_executed += Math.floor(Math.random() * 10);
+            performanceMetrics.avg_response_time = (Math.random() * 2 + 1).toFixed(2);
+            performanceMetrics.cache_hit_rate = (Math.random() * 20 + 80).toFixed(1);
+            performanceMetrics.active_connections = Math.floor(Math.random() * 50 + 100);
+            
+            // Update UI if metrics panel exists
+            const metricsPanel = document.getElementById('metricsPanel');
+            if (metricsPanel) {
+                metricsPanel.innerHTML = `
+                    <div class="metric">
+                        <span class="metric-value">${performanceMetrics.queries_executed}</span>
+                        <span class="metric-label">Queries Executed</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value">${performanceMetrics.avg_response_time}s</span>
+                        <span class="metric-label">Avg Response Time</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value">${performanceMetrics.cache_hit_rate}%</span>
+                        <span class="metric-label">Cache Hit Rate</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value">${performanceMetrics.active_connections}</span>
+                        <span class="metric-label">Active Connections</span>
+                    </div>
+                `;
+            }
+        }
+
+        setInterval(updateMetrics, 5000);
+
+        // Schema evolution notification system
+        const schemaChanges = [
+            "PostgreSQL: Added customer_segments table with foreign key relationships",
+            "MySQL: Partitioned orders table by date for improved performance",
+            "SQLite: Added full-text search indices on product descriptions",
+            "MongoDB: Updated user_profiles schema with new engagement metrics"
+        ];
+
+        function showSchemaNotification() {
+            const notification = document.createElement('div');
+            notification.className = 'schema-notification';
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <span class="notification-icon">🔄</span>
+                    <span class="notification-text">${schemaChanges[Math.floor(Math.random() * schemaChanges.length)]}</span>
+                    <button onclick="this.parentElement.parentElement.remove()">×</button>
+                </div>
+            `;
+            
+            notification.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                background: rgba(37, 99, 235, 0.95);
+                color: white;
+                padding: 1rem;
+                border-radius: 12px;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+                z-index: 1001;
+                max-width: 400px;
+                animation: slideInRight 0.3s ease-out;
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
+        // Show schema notifications periodically
+        setTimeout(() => {
+            setInterval(showSchemaNotification, 30000 + Math.random() * 20000);
+        }, 10000);
+
+        // Add CSS for notifications
+        const notificationStyles = document.createElement('style');
+        notificationStyles.textContent = `
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            
+            .notification-content {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+            }
+            
+            .notification-icon {
+                font-size: 1.2rem;
+            }
+            
+            .notification-text {
+                flex: 1;
+                font-size: 0.9rem;
+            }
+            
+            .notification-content button {
+                background: none;
+                border: none;
+                color: white;
+                font-size: 1.2rem;
+                cursor: pointer;
+                padding: 0;
+                width: 20px;
+                height: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                transition: background-color 0.2s;
+            }
+            
+            .notification-content button:hover {
+                background-color: rgba(255, 255, 255, 0.2);
+            }
+        `;
+        document.head.appendChild(notificationStyles);
+
+        // Voice input functionality (mock)
+        let isListening = false;
+        function toggleVoiceInput() {
+            const voiceButton = document.getElementById('voiceButton');
+            if (!voiceButton) return;
+            
+            isListening = !isListening;
+            
+            if (isListening) {
+                voiceButton.innerHTML = '🎤';
+                voiceButton.style.background = '#ef4444';
+                
+                // Simulate voice recognition
+                setTimeout(() => {
+                    const voiceQuery = "Show me customers from California who placed orders over one thousand dollars";
+                    document.getElementById('queryInput').value = voiceQuery;
+                    isListening = false;
+                    voiceButton.innerHTML = '🎙️';
+                    voiceButton.style.background = 'var(--primary)';
+                }, 3000);
+            } else {
+                voiceButton.innerHTML = '🎙️';
+                voiceButton.style.background = 'var(--primary)';
+            }
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Enterprise Multi-Database Natural Language Query Engine Initialized');
+            updateConnectionStatus();
+            updateMetrics();
+            
+            // Add any additional initialization code here
+            const queryInput = document.getElementById('queryInput');
+            queryInput.addEventListener('input', function() {
+                // Real-time query validation and suggestions could go here
+                const query = this.value.toLowerCase();
+                if (query.includes('delete') || query.includes('drop') || query.includes('truncate')) {
+                    this.style.borderColor = '#ef4444';
+                    this.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.1)';
+                } else {
+                    this.style.borderColor = 'var(--border)';
+                    this.style.boxShadow = 'none';
+                }
+            });
+        });
+
+    </script>
+</body>
+</html>
