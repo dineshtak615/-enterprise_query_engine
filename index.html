@@ -1,0 +1,915 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Multi-Database Natural Language Query Engine</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --border: #e2e8f0;
+            --glass: rgba(255, 255, 255, 0.1);
+            --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+        }
+        
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+            top: 10%;
+            left: 20%;
+        }
+        
+        .bg-animation::after {
+            content: '';
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            background: linear-gradient(45deg, #feca57, #ff9ff3);
+            border-radius: 50%;
+            animation: float 8s ease-in-out infinite reverse;
+            bottom: 20%;
+            right: 10%;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+        
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .logo::before {
+            content: '🚀';
+            font-size: 1.8rem;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+        
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-links a:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .cta-button {
+            background: var(--primary);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .cta-button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+        
+        /* Main Content */
+        main {
+            margin-top: 80px;
+        }
+        
+        /* Hero Section */
+        .hero {
+            min-height: 90vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+        }
+        
+        .hero-content {
+            max-width: 800px;
+            color: white;
+            animation: fadeInUp 1s ease-out;
+        }
+        
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #fff 0%, #e2e8f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+        
+        .hero p {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+        
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        /* Query Interface Section */
+        .query-section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            margin: 4rem auto;
+            max-width: 1200px;
+            border-radius: 20px;
+            padding: 3rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: var(--shadow);
+        }
+        
+        .query-interface {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .query-input {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .query-box {
+            flex: 1;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+        
+        .query-box:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .query-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .db-selector {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .db-chip {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid var(--border);
+        }
+        
+        .db-chip.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .db-chip:not(.active) {
+            background: var(--light);
+            color: var(--secondary);
+        }
+        
+        .db-chip:hover:not(.active) {
+            background: rgba(37, 99, 235, 0.1);
+        }
+        
+        /* Features Grid */
+        .features {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            margin: 4rem auto;
+            max-width: 1200px;
+            border-radius: 20px;
+            padding: 3rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .features h2 {
+            text-align: center;
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            font-weight: 700;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+        
+        .feature-card h3 {
+            color: white;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+        
+        .feature-card p {
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.6;
+        }
+        
+        /* Stats Section */
+        .stats {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            margin: 4rem auto;
+            max-width: 1200px;
+            border-radius: 20px;
+            padding: 3rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            text-align: center;
+        }
+        
+        .stat-item h3 {
+            font-size: 3rem;
+            color: var(--primary);
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            counter-reset: stat;
+            animation: countUp 2s ease-out;
+        }
+        
+        .stat-item p {
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+        }
+        
+        /* Demo Section */
+        .demo {
+            background: white;
+            margin: 4rem auto;
+            max-width: 1200px;
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: var(--shadow);
+        }
+        
+        .demo h2 {
+            text-align: center;
+            color: var(--dark);
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            font-weight: 700;
+        }
+        
+        .demo-queries {
+            display: grid;
+            gap: 1rem;
+        }
+        
+        .demo-query {
+            background: var(--light);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .demo-query:hover {
+            background: rgba(37, 99, 235, 0.05);
+            transform: translateX(5px);
+        }
+        
+        .demo-query h4 {
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .demo-query p {
+            color: var(--secondary);
+            font-style: italic;
+        }
+        
+        /* Footer */
+        footer {
+            background: var(--dark);
+            color: white;
+            text-align: center;
+            padding: 3rem 2rem;
+            margin-top: 4rem;
+        }
+        
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .footer-links a:hover {
+            color: white;
+        }
+        
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes countUp {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .query-section,
+            .features,
+            .stats,
+            .demo {
+                margin: 2rem 1rem;
+                padding: 2rem;
+            }
+            
+            .query-input {
+                flex-direction: column;
+            }
+             .analysis-cards-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .hidden { display: none; }
+        
+        .result-container {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: var(--light);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        
+        /* --- UPDATED STYLES FOR CODE BLOCK --- */
+        .result-sql {
+            background: var(--dark);
+            color: #e2e8f0; /* Light text for contrast */
+            padding: 1.5rem;
+            border: 1px solid #334155; /* Darker border */
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap; /* Wrap long lines and preserve whitespace */
+            overflow-wrap: break-word; /* Break long words if they would overflow */
+        }
+        
+        /* Syntax Highlighting Tokens */
+        .token-keyword { color: #81a1c1; }
+        .token-string { color: #a3be8c; }
+        .token-number, .token-boolean { color: #d08770; }
+        .token-comment { color: var(--secondary); font-style: italic; }
+        /* --- END UPDATED STYLES --- */
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .result-title {
+            color: var(--dark);
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+        
+        .section-title {
+            color: var(--dark);
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .copy-btn {
+            background: var(--light);
+            border: 1px solid var(--border);
+            color: var(--secondary);
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .copy-btn:hover {
+            background: #e2e8f0; /* Use a var */
+            color: var(--dark);
+        }
+
+        .copy-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .analysis-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .analysis-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .analysis-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        
+        .analysis-card-icon {
+            flex-shrink: 0;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: grid;
+            place-items: center;
+            color: var(--primary);
+            background: rgba(37, 99, 235, 0.1);
+        }
+
+        .analysis-card-icon svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .analysis-card-label {
+            font-size: 0.875rem;
+            color: var(--secondary);
+            margin-bottom: 0.125rem;
+            font-weight: 500;
+        }
+
+        .analysis-card-value {
+            font-size: 1.25rem;
+            color: var(--dark);
+            font-weight: 600;
+        }
+        
+        .query-block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        #queryExplanation p {
+            color: var(--secondary);
+            line-height: 1.65;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    
+    <header>
+        <nav>
+            <a href="#" class="logo">myOnsite Healthcare Query Engine</a>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#demo">Demo</a></li>
+                <li><a href="#docs">Documentation</a></li>
+                <li><a href="#api">API</a></li>
+                <li><a href="#support">Support</a></li>
+            </ul>
+            <button class="cta-button" onclick="scrollToQuery()">Try Now</button>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Enterprise Multi-Database Natural Language Query Engine</h1>
+                <p>Transform complex business questions into optimized SQL across PostgreSQL, MySQL, SQLite, and MongoDB with real-time schema adaptation and enterprise-grade security.</p>
+                <div class="hero-buttons">
+                    <button class="cta-button" onclick="scrollToQuery()">Start Querying</button>
+                    <a href="#demo" class="btn-secondary">View Demo</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="query-section" id="query-interface">
+            <div class="query-interface">
+                <h2 style="margin-bottom: 1.5rem; color: var(--dark); font-weight: 600;">Natural Language Query Interface</h2>
+                
+                <div class="query-input">
+                    <textarea 
+                        class="query-box" 
+                        id="queryInput"
+                        aria-label="Natural Language Query Input"
+                        placeholder="Ask me anything about your data... 
+
+Examples:
+• Show me all customers from California who placed orders over $1000
+• What's the revenue trend for the last 6 months by product category?
+• Find customers likely to churn based on their activity patterns"
+                    ></textarea>
+                </div>
+                
+                <div class="query-controls">
+                    <div class="db-selector" role="group" aria-label="Select target databases">
+                        <div class="db-chip active" data-db="postgresql" role="checkbox" aria-checked="true" tabindex="0">PostgreSQL</div>
+                        <div class="db-chip active" data-db="mysql" role="checkbox" aria-checked="true" tabindex="0">MySQL</div>
+                        <div class="db-chip active" data-db="sqlite" role="checkbox" aria-checked="true" tabindex="0">SQLite</div>
+                        <div class="db-chip active" data-db="mongodb" role="checkbox" aria-checked="true" tabindex="0">MongoDB</div>
+                    </div>
+                    <button class="cta-button" onclick="executeQuery()">
+                        <span id="queryButtonText">Execute Query</span>
+                        <div id="queryLoading" class="loading hidden" role="status" aria-label="Loading"></div>
+                    </button>
+                </div>
+                
+                <div id="queryResult" class="result-container hidden" aria-live="polite">
+                    <div class="result-header">
+                        <h4 class="result-title">Query Results</h4>
+                    </div>
+
+                    <h5 class="section-title">Analysis</h5>
+                    <div id="queryAnalysis" class="analysis-cards-grid">
+                         <div class="analysis-card">
+                            <div class="analysis-card-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="analysis-card-label">Confidence</div>
+                                <div class="analysis-card-value" id="confidenceValue">N/A</div>
+                            </div>
+                        </div>
+                        <div class="analysis-card">
+                             <div class="analysis-card-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="analysis-card-label">Complexity</div>
+                                <div class="analysis-card-value" id="complexityValue">N/A</div>
+                            </div>
+                        </div>
+                        <div class="analysis-card">
+                             <div class="analysis-card-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="analysis-card-label">Est. Time</div>
+                                <div class="analysis-card-value" id="timeValue">N/A</div>
+                            </div>
+                        </div>
+                        <div class="analysis-card">
+                             <div class="analysis-card-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12a7.5 7.5 0 0 0 15 0m-15 0a7.5 7.5 0 1 1 15 0m-15 0H3m16.5 0H21m-9 6.75v-1.5m0-10.5v-1.5m6.364 12.364-1.06-1.06M6.197 6.197l-1.06-1.06m12.364 0-1.06 1.06M6.197 17.803l-1.06 1.06" />
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="analysis-card-label">Targets</div>
+                                <div class="analysis-card-value" id="targetsValue">N/A</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="query-block" style="margin-top: 1.5rem;">
+                        <div class="query-block-header">
+                             <h5 class="section-title">Generated Query</h5>
+                            <button id="copyButton" class="copy-btn" title="Copy generated query" aria-label="Copy generated query">
+                                <span id="copyIcon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+                                        <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+                                    </svg>
+                                </span>
+                                <span id="copyText">Copy</span>
+                            </button>
+                        </div>
+                        <pre><code id="generatedSQL" class="result-sql"></code></pre>
+                    </div>
+
+                    <div id="queryExplanation" style="margin-top: 1.5rem;">
+                        <h5 class="section-title">Explanation</h5>
+                        <p id="reasoningText" style="margin-bottom: 0.5rem;"></p>
+                        <p id="optimizationText"></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="features" id="features">
+            <h2>Enterprise-Grade Capabilities</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <span class="feature-icon" aria-hidden="true">🎯</span>
+                    <h3>Advanced NL Processing</h3>
+                    <p>Multi-intent query parsing with temporal reasoning, business context awareness, and ambiguity resolution with confidence scoring.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon" aria-hidden="true">🔄</span>
+                    <h3>Real-time Schema Evolution</h3>
+                    <p>Automatic schema discovery and adaptation. Handle structural changes, relationship mapping, and version management seamlessly.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon" aria-hidden="true">🛡️</span>
+                    <h3>Enterprise Security</h3>
+                    <p>Multi-layered SQL injection prevention, role-based access control, query governance, and comprehensive audit logging.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon" aria-hidden="true">🚀</span>
+                    <h3>Multi-Database Federation</h3>
+                    <p>Seamless querying across PostgreSQL, MySQL, SQLite, and MongoDB with dialect-specific optimizations and cross-database joins.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon" aria-hidden="true">📊</span>
+                    <h3>Business Intelligence</h3>
+                    <p>Automated insights detection, performance analytics, cost optimization, and compliance reporting with SOX/GDPR support.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon" aria-hidden="true">⚡</span>
+                    <h3>High Performance</h3>
+                    <p>Intelligent caching, predictive prefetching, cost-based routing, and real-time performance tuning for optimal query execution.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="stats">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <h3>99.9%</h3>
+                    <p>Uptime Guarantee</p>
+                </div>
+                <div class="stat-item">
+                    <h3>&lt;3s</h3>
+                    <p>Simple Query Response</p>
+                </div>
+                <div class="stat-item">
+                    <h3>1000+</h3>
+                    <p>Concurrent Queries</p>
+                </div>
+                <div class="stat-item">
+                    <h3>90%+</h3>
+                    <p>Query Accuracy</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="demo" id="demo">
+            <h2>Example Queries</h2>
+            <div class="demo-queries">
+                <div class="demo-query" onclick="loadDemoQuery(this)" tabindex="0" role="button" onkeydown="if(event.key==='Enter' || event.key===' ') this.click()">
+                    <h4>Customer Analysis</h4>
+                    <p>"Show me customers from California who haven't ordered in the last 30 days but had high lifetime value"</p>
+                </div>
+                
+                <div class="demo-query" onclick="loadDemoQuery(this)" tabindex="0" role="button" onkeydown="if(event.key==='Enter' || event.key===' ') this.click()">
+                    <h4>Revenue Analytics</h4>
+                    <p>"Calculate the 3-month rolling average of monthly recurring revenue by customer segment"</p>
+                </div>
+                
+                <div class="demo-query" onclick="loadDemoQuery(this)" tabindex="0" role="button" onkeydown="if(event.key==='Enter' || event.key===' ') this.click()">
+                    <h4>Cross-Database Insights</h4>
+                    <p>"Compare PostgreSQL order patterns with MongoDB user activity to identify upgrade opportunities"</p>
+                </div>
+                
+                <div class="demo-query" onclick="loadDemoQuery(this)" tabindex="0" role="button" onkeydown="if(event.key==='Enter' || event.key===' ') this.click()">
+                    <h4>Churn Prediction</h4>
+                    <p>"Find customers exhibiting churn behavior patterns similar to our top revenue customers"</p>
+                </div>
+                
+                <div class="demo-query" onclick="loadDemoQuery(this)" tabindex="0" role="button" onkeydown="if(event.key==='Enter' || event.key===' ') this.click()">
+                    <h4>Cohort Analysis</h4>
+                    <p>"Generate customer lifetime value cohort analysis using all databases, segmented by acquisition channel"</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="#api">API Documentation</a>
+                <a href="#security">Security</a>
+                <a href="#compliance">Compliance</a>
+                <a href="#support">Support</a>
+                <a href="#pricing">Pricing</a>
+            </div>
+            <p>&copy; 2025 myOnsite Healthcare, LLC. All rights reserved.</p>
+            <p style="margin-top: 0.5rem; opacity: 0.7;">Enterprise Multi-Database Natural Language Query Engine v1.0</p>
+        </div>
+    </footer>
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>
