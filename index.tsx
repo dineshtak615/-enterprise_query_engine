@@ -15,16 +15,16 @@ declare global {
     }
 }
 
-const apiKey = import.meta.env.VITE_API_KEY;
+const apiKey = process.env.API_KEY;
 if (!apiKey) {
   // A simple error message for the user, in case the API key is not set.
   const queryResult = document.getElementById('queryResult');
   const queryAnalysis = document.getElementById('queryAnalysis');
   if(queryResult && queryAnalysis) {
     queryResult.classList.remove('hidden');
-    queryAnalysis.innerHTML = `<p style="color: var(--danger);"><strong>Configuration Error:</strong> VITE_API_KEY is not set. Please create a .env file and add your API key.</p>`;
+    queryAnalysis.innerHTML = `<p style="color: var(--danger); grid-column: 1 / -1;"><strong>Configuration Error:</strong> API_KEY is not set. Please ensure the API_KEY environment variable is configured.</p>`;
   }
-  throw new Error("VITE_API_KEY environment variable not set.");
+  throw new Error("API_KEY environment variable not set.");
 }
 const ai = new GoogleGenAI({ apiKey });
 
